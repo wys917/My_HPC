@@ -11,4 +11,4 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -g -O2 -fopenmp ")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -g -O2 -fopenmp -fno-tree-vectorize ")
