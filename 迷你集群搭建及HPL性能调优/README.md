@@ -29,7 +29,7 @@
 - **并行框架**: OpenMPI 5.0.3
 - **数学库**: BLAS 3.12.0, CBLAS
 - **基准测试**: HPL 2.3
-- **开发工具**: Make, Python 3.x, matplotlib
+- **开发工具**: Make, Python 3.x
 
 ## 🏗️ 项目结构
 
@@ -120,7 +120,7 @@ python -m pip install matplotlib
 ### 运行可视化脚本
 ```bash
 # 切换到lab1目录
-cd lab1
+cd 迷你集群搭建及HPL性能调优
 
 # 生成N vs Gflops图表
 python code/hpl_n_vs_gflops_plot.py
@@ -156,17 +156,11 @@ python code/plot_n_and_nb_vs_gflops.py
 3. **负载均衡**: 优化进程网格配置(P×Q)，平衡计算与通信
 4. **缓存友好**: 选择合适的分块大小，提高缓存命中率
 
-## 📚 学习资源
-
-- [HPL官方文档](http://www.netlib.org/benchmark/hpl/)
-- [OpenMPI用户指南](https://www.open-mpi.org/doc/)
-- [BLAS/LAPACK参考手册](http://www.netlib.org/lapack/)
 
 ## 📧 联系信息
 
 如有问题或建议，请联系：
 - **姓名**: 苏易文
-- **学号**: 3240103466
 - **邮箱**: 3240103466@zju.edu.cn
 
 ---

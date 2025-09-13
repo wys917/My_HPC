@@ -5,7 +5,7 @@
 
 ## 📌 项目概述
 
-本实验专注于优化整数量化矩阵乘法（`uint8_t * int8_t`），通过深入理解现代CPU的向量化指令集，实现了基于AVX-512和AMX的高性能SIMD优化。项目包含了从基础向量化到终极硬件加速的完整优化路径，展示了现代处理器架构在数值计算中的强大威力。
+本实验专注于优化整数量化矩阵乘法，通过深入理解现代CPU的向量化指令集，实现了基于AVX-512和AMX的高性能SIMD优化。项目包含了从基础向量化到终极硬件加速的完整优化路径，展示了现代处理器架构在数值计算中的强大威力。
 
 ## 🎯 实验目标
 
@@ -13,7 +13,6 @@
 - 理解数据重排（Data Reshaping）在SIMD优化中的关键作用
 - 探索Intel AMX指令集在矩阵运算中的革命性优势
 - 分析不同硬件加速技术的性能特征和适用场景
-- 学习NumPy向量化编程的最佳实践
 
 ## ⚙️ 技术栈与环境
 
@@ -25,7 +24,7 @@
 ### 软件环境
 - **编程语言**: C++17, Python 3.x
 - **编译工具**: CMake 3.10+, GCC/Clang
-- **依赖库**: Intel intrinsics, NumPy
+- **依赖库**: Intel intrinsics
 - **开发工具**: CMake, Make
 
 ## 🏗️ 项目结构
@@ -80,26 +79,60 @@ C = A * B_transposed
 #### 关键代码片段
 ```cpp
 // 循环展开和Tiling: M维度每次处理1行，N维度每次处理16列
-for (int i = 0; i < M; ++i) {
-    for (int j = 0; j < N; j += 16) {
-        __m512i c_vec_accumulator = _mm512_setzero_si512();
-        
-        for (int k = 0; k < K; ++k) {
-            // 1. 从A矩阵加载并广播数据
-            __m128i a_block_128 = _mm_cvtsi32_si128(*(const int*)(&A[i * K * 4 + k * 4]));
-            __m512i a_vec_broadcasted = _mm512_broadcastd_epi32(a_block_128);
-            
-            // 2. 从重排后的B矩阵加载连续数据
-            __m512i b_vec_packed = _mm512_loadu_si512((__m512i const*)&B_reshape[k * N * 4 + j * 4]);
-            
-            // 3. 执行核心的点积累加运算
-            c_vec_accumulator = _mm512_dpbusd_epi32(c_vec_accumulator, a_vec_broadcasted, b_vec_packed);
+for (int i = 0; i < M; i += 4) {
+            for (int j = 0; j < N; j += 16) { // 每次计算C的一行中的16个元素
+
+                // 在 j 循环内部...
+                // 定义累加器...
+                __m512i c_vec_0 = _mm512_setzero_si512();
+                __m512i c_vec_1 = _mm512_setzero_si512();
+                __m512i c_vec_2 = _mm512_setzero_si512();
+                __m512i c_vec_3 = _mm512_setzero_si512();
+
+                // K维度循环，步长为2
+                for (int k = 0; k < K; k += 2) { 
+                    // ====================== 加载阶段 (Load Phase) ======================
+                    // 把未来两次迭代需要的所有数据，一次性全部发出加载指令
+                    
+                    // --- k iter 1 data ---
+                    __m512i b_vec_k0 = _mm512_loadu_si512((__m512i const*)&B_reshape[(k+0) * N * 4 + j * 4]);
+                    __m512i a_vec_0_k0 = _mm512_set1_epi32(*(const int*)(&A[(i+0) * K * 4 + (k+0) * 4]));
+                    __m512i a_vec_1_k0 = _mm512_set1_epi32(*(const int*)(&A[(i+1) * K * 4 + (k+0) * 4]));
+                    __m512i a_vec_2_k0 = _mm512_set1_epi32(*(const int*)(&A[(i+2) * K * 4 + (k+0) * 4]));
+                    __m512i a_vec_3_k0 = _mm512_set1_epi32(*(const int*)(&A[(i+3) * K * 4 + (k+0) * 4]));
+                    
+                    // --- k iter 2 data ---
+                    __m512i b_vec_k1 = _mm512_loadu_si512((__m512i const*)&B_reshape[(k+1) * N * 4 + j * 4]);
+                    __m512i a_vec_0_k1 = _mm512_set1_epi32(*(const int*)(&A[(i+0) * K * 4 + (k+1) * 4]));
+                    __m512i a_vec_1_k1 = _mm512_set1_epi32(*(const int*)(&A[(i+1) * K * 4 + (k+1) * 4]));
+                    __m512i a_vec_2_k1 = _mm512_set1_epi32(*(const int*)(&A[(i+2) * K * 4 + (k+1) * 4]));
+                    __m512i a_vec_3_k1 = _mm512_set1_epi32(*(const int*)(&A[(i+3) * K * 4 + (k+1) * 4]));
+
+                    // ====================== 计算阶段 (Compute Phase) ======================
+                    // 此刻，大部分加载延迟已经被隐藏，现在集中进行计算
+                    
+                    // --- k iter 1 computes ---
+                    c_vec_0 = _mm512_dpbusd_epi32(c_vec_0, a_vec_0_k0, b_vec_k0);
+                    c_vec_1 = _mm512_dpbusd_epi32(c_vec_1, a_vec_1_k0, b_vec_k0);
+                    c_vec_2 = _mm512_dpbusd_epi32(c_vec_2, a_vec_2_k0, b_vec_k0);
+                    c_vec_3 = _mm512_dpbusd_epi32(c_vec_3, a_vec_3_k0, b_vec_k0);
+
+                    // --- k iter 2 computes ---
+                    c_vec_0 = _mm512_dpbusd_epi32(c_vec_0, a_vec_0_k1, b_vec_k1);
+                    c_vec_1 = _mm512_dpbusd_epi32(c_vec_1, a_vec_1_k1, b_vec_k1);
+                    c_vec_2 = _mm512_dpbusd_epi32(c_vec_2, a_vec_2_k1, b_vec_k1);
+                    c_vec_3 = _mm512_dpbusd_epi32(c_vec_3, a_vec_3_k1, b_vec_k1);
+                }
+
+                // ... 存储结果 ...
+
+                // 循环结束后，将4个累加器的结果写回C矩阵
+                _mm512_storeu_si512((__m512i*)&C[(i+0) * N + j], c_vec_0);
+                _mm512_storeu_si512((__m512i*)&C[(i+1) * N + j], c_vec_1);
+                _mm512_storeu_si512((__m512i*)&C[(i+2) * N + j], c_vec_2);
+                _mm512_storeu_si512((__m512i*)&C[(i+3) * N + j], c_vec_3);
+            }
         }
-        
-        // 4. 将结果写回C矩阵
-        _mm512_storeu_si512((__m512i*)&C[i * N + j], c_vec_accumulator);
-    }
-}
 ```
 
 ### 2. AMX 终极优化（Bonus）
@@ -202,25 +235,6 @@ python main.py
 - **二维处理**: 直接操作二维数据瓦片
 - **高效流水**: TMUL单元提供极高计算吞吐量
 
-## 📚 实验思考题解答
-
-### 1. NumPy向量化中None的作用
-在`bilinear_interp_vectorized.py`中，`None`用于增加维度，为广播机制做准备：
-- `x_mul = (x - x_idx)[:,:,:,None]` 将形状从`(N,H2,W2)`变为`(N,H2,W2,1)`
-- 支持与`(N,H2,W2,C)`形状的数组进行广播运算
-
-### 2. 高级索引的广播机制
-`a[n_idx, x_idx, y_idx]`通过广播实现批量索引：
-- **最终形状**: `[N, H2, W2, C]`
-- **作用机制**: 三个索引数组通过广播组合成坐标网格
-- **效果**: 并行检索所有对应位置的像素数据
-
-### 3. 矩阵转置算法中的Intel指令
-详细的指令解析包括：
-- `_mm256_loadu_epi64`: 非对齐加载256位数据
-- `_mm512_castsi256_si512`: 类型转换（256位→512位）
-- `_mm512_inserti64x4`: 插入256位数据到512位向量
-- `_mm512_mask_permutexvar_epi64`: 掩码控制的可变置换
 
 ## 🏆 关键收获
 

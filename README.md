@@ -13,12 +13,12 @@
 - **关键技术**: 集群配置、网络组网、性能基准测试与参数调优
 
 ### ⚡ [基于AVX-512的整数量化矩阵乘法优化实验](./基于AVX-512的整数量化矩阵乘法优化实验/)
-- **技术栈**: C++, AVX-512/AMX Intrinsics, CMake, Python
+- **技术栈**:  AVX-512/AMX Intrinsics, CMake, Python
 - **核心成果**: AVX-512实现 **48.67倍** 加速，AMX实现 **120.8倍** 加速
 - **关键技术**: SIMD向量化、数据重排、内存访问优化
 
 ### 🔄 [基于MPI+OpenMP混合并行的BiCGSTAB算法实现与调优](./基于MPI+OpenMP混合并行的BiCGSTAB算法实现与调优/)
-- **技术栈**: C++, MPI, OpenMP, Intel VTune, SLURM
+- **技术栈**:  MPI, OpenMP, Intel VTune, SLURM
 - **核心成果**: OpenMP单节点实现 **108.8倍** 加速，混合并行达到 **30.4倍** 加速
 - **关键技术**: 共享内存并行、分布式内存并行、性能剖析与瓶颈分析
 

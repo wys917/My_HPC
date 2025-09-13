@@ -1,6 +1,5 @@
 # 🔄 基于MPI+OpenMP混合并行的BiCGSTAB算法实现与调优
 
-[![Language](https://img.shields.io/badge/Language-C%2B%2B-blue.svg)](https://en.cppreference.com/)
 [![OpenMP](https://img.shields.io/badge/OpenMP-4.5+-green.svg)](https://www.openmp.org/)
 [![MPI](https://img.shields.io/badge/MPI-OpenMPI%204.0+-orange.svg)](https://www.open-mpi.org/)
 
@@ -209,14 +208,6 @@ vtune -report hotspots -r r000hs
 export OMP_NUM_THREADS=48
 mpirun -np 2 ./bicgstab_solver
 ```
-
-
-
-**数据文件**：
-- 测试数据位于 `/river/hpc101/2025/lab4/data`
-- 可通过 `ln -s /river/hpc101/2025/lab4/data data` 引用
-- 提交时请勿包含数据文件
-
 
 
 ## 📄 许可证
