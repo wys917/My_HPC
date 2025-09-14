@@ -1,4 +1,4 @@
-# 🔄 基于MPI+OpenMP混合并行的BiCGSTAB算法实现与调优
+# 🔄 BiCGSTAB算法实现与优化
 
 [![OpenMP](https://img.shields.io/badge/OpenMP-4.5+-green.svg)](https://www.openmp.org/)
 [![MPI](https://img.shields.io/badge/MPI-OpenMPI%204.0+-orange.svg)](https://www.open-mpi.org/)
@@ -218,4 +218,4 @@ mpirun -np 2 ./bicgstab_solver
 
 **作者**: 苏易文 (学号: 3240103466)  
 **课程**: 高性能计算 - 浙江大学  
-**完成时间**: 2025年9月
+**完成时间**: 2025年7月
